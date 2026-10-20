@@ -97,34 +97,8 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 	return nil
 }
 
-func (s ParcelStore) isRegistered(number int) (bool, error) {
-	row, err := s.Get(number)
-
-	if err != nil {
-		fmt.Println(err)
-		return false, err
-	}
-
-	if row.Status != "registered" {
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func (s ParcelStore) SetAddress(number int, address string) error {
-	isRegistered, err := s.isRegistered(number)
-
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	if !isRegistered {
-		return fmt.Errorf("status parcel with number %d is not registered", number)
-	}
-
-	_, err = s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number", sql.Named("address", address), sql.Named("number", number))
+	_, err := s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number AND status = 'registered'", sql.Named("address", address), sql.Named("number", number))
 
 	if err != nil {
 		fmt.Println(err)
@@ -135,18 +109,7 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 }
 
 func (s ParcelStore) Delete(number int) error {
-	isRegistered, err := s.isRegistered(number)
-
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	if !isRegistered {
-		return fmt.Errorf("status parcel with number %d is not registered", number)
-	}
-
-	_, err = s.db.Exec("DELETE FROM parcel WHERE number = :number", sql.Named("number", number))
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = :number AND status = 'registered'", sql.Named("number", number))
 
 	if err != nil {
 		fmt.Println(err)
